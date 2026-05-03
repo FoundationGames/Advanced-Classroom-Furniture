@@ -1,13 +1,7 @@
 package foundationgames.classroomfurniture.client.mixin.camerarotation;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-
 //@Mixin(value = {WorldRenderer.class}, priority = 1500)
-public class WorldRendererMixin {
+public class LevelRendererMixin {
 //    @Shadow @Final private MinecraftClient client;
 //
 //    @ModifyExpressionValue(method = "updateCamera",
