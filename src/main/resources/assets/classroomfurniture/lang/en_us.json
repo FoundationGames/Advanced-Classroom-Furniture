@@ -1,0 +1,35 @@
+{
+  "creativeTab.classroomfurniture": "Advanced Classroom Furniture",
+
+  "item.classroomfurniture.grab_hand": "Furniture Grabbing Hand",
+  "item.classroomfurniture.glue_hand": "Furniture Gluing Hand",
+  "item.classroomfurniture.hammer": "Furniture Dismantling Hammer",
+
+  "item.classroomfurniture.blue_pencil_sharpener": "Pencil Sharpener",
+
+  "item.classroomfurniture.oak_desk": "Oak Desk",
+  "item.classroomfurniture.birch_desk": "Birch Desk",
+  "item.classroomfurniture.spruce_desk": "Spruce Desk",
+  "item.classroomfurniture.jungle_desk": "Jungle Desk",
+  "item.classroomfurniture.acacia_desk": "Acacia Desk",
+  "item.classroomfurniture.dark_oak_desk": "Dark Oak Desk",
+  "item.classroomfurniture.mangrove_desk": "Mangrove Desk",
+  "item.classroomfurniture.cherry_desk": "Cherry Desk",
+  "item.classroomfurniture.pale_oak_desk": "Pale Oak Desk",
+  "item.classroomfurniture.crimson_desk": "Crimson Desk",
+  "item.classroomfurniture.warped_desk": "Warped Desk",
+  "item.classroomfurniture.bamboo_desk": "Bamboo Desk",
+
+  "item.classroomfurniture.oak_chair": "Azure Chair",
+  "item.classroomfurniture.birch_chair": "Vermilion Chair",
+  "item.classroomfurniture.spruce_chair": "Lavender Chair",
+  "item.classroomfurniture.jungle_chair": "Olive Chair",
+  "item.classroomfurniture.acacia_chair": "Goldenrod Chair",
+  "item.classroomfurniture.dark_oak_chair": "Aquamarine Chair",
+  "item.classroomfurniture.mangrove_chair": "Cadet Blue Chair",
+  "item.classroomfurniture.cherry_chair": "Sky Blue Chair",
+  "item.classroomfurniture.pale_oak_chair": "Sienna Chair",
+  "item.classroomfurniture.crimson_chair": "Rose Gold Chair",
+  "item.classroomfurniture.warped_chair": "Gilded Seafoam Chair",
+  "item.classroomfurniture.bamboo_chair": "Bamboo Chair"
+}

@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "classroomfurniture:item/chair",
+    "model": {
+      "type": "classroomfurniture:prop",
+      "entity_model": "classroomfurniture:desk",
+      "layer": "chair",
+      "texture": "classroomfurniture:textures/entity/desk/dark_oak.png"
+    }
+  }
+}

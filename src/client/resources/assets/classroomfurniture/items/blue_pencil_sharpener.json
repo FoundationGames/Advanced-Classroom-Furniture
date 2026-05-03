@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "classroomfurniture:item/chair",
+    "model": {
+      "type": "classroomfurniture:prop",
+      "entity_model": "classroomfurniture:pencil_sharpener",
+      "layer": "main",
+      "texture": "classroomfurniture:textures/entity/pencil_sharpener/blue.png"
+    }
+  }
+}

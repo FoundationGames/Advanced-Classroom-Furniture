@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "classroomfurniture",
+	"version": "${version}",
+	"name": "Advanced Classroom Furniture",
+	"description": "Adds highly functional classroom-themed furniture.",
+	"authors": [
+		"FoundationGames"
+	],
+	"contact": {
+		"homepage": "",
+		"sources": ""
+	},
+	"license": "MIT",
+	"icon": "assets/classroomfurniture/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"foundationgames.classroomfurniture.ClassroomFurniture"
+		],
+		"client": [
+			"foundationgames.classroomfurniture.client.ClassroomFurnitureClient"
+		]
+	},
+	"mixins": [
+		"classroomfurniture.mixins.json",
+		{
+			"config": "classroomfurniture.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.18.6",
+		"minecraft": ">=26.1",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

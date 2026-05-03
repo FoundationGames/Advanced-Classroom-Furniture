@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "classroomfurniture:item/desk",
+    "model": {
+      "type": "classroomfurniture:prop",
+      "entity_model": "classroomfurniture:desk",
+      "layer": "main",
+      "texture": "classroomfurniture:textures/entity/desk/cherry.png"
+    }
+  }
+}

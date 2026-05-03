@@ -1,0 +1,97 @@
+package foundationgames.classroomfurniture.physics.geometry;
+
+import foundationgames.classroomfurniture.physics.PhysUtil;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3d;
+import org.joml.Matrix4x3d;
+import org.joml.Matrix4x3dc;
+import org.joml.Vector3d;
+import org.joml.Vector3dc;
+
+public class PhysTransformedShape implements PhysShape {
+    public @NotNull PhysShape shape = PhysShape.EMPTY;
+    public final Matrix4x3d transform = new Matrix4x3d();
+
+    @Override
+    public int faceCount() {
+        return shape.faceCount();
+    }
+
+    @Override
+    public void getFaceNormal(int face, Vector3d faceNormal) {
+        shape.getFaceNormal(face, faceNormal);
+        transform.transformDirection(faceNormal);
+    }
+
+    @Override
+    public int vertexCount() {
+        return shape.vertexCount();
+    }
+
+    @Override
+    public void getVertex(int vertex, Vector3d vertexPos) {
+        shape.getVertex(vertex, vertexPos);
+        transform.transformPosition(vertexPos);
+    }
+
+    @Override
+    public double circumcircleSquaredRadius() {
+        return shape.circumcircleSquaredRadius();
+    }
+
+    @Override
+    public Vector3d circumcircleOrigin(Vector3d origin) {
+        return transform.transformPosition(shape.circumcircleOrigin(origin));
+    }
+
+    @Override
+    public @Nullable PhysInterpen interpenFace(int face, Vector3dc vtx) {
+        var vtxLocal = new Vector3d(vtx);
+        this.transform.invert(new Matrix4x3d()).transformPosition(vtxLocal);
+
+        var pen = shape.interpenFace(face, vtxLocal);
+        if (pen != null) {
+            pen = pen.transform(this.transform);
+        }
+
+        return pen;
+    }
+
+    @Override
+    public void inertiaTensor(Matrix3d inertia) {
+        shape.inertiaTensor(inertia);
+        PhysUtil.projectSquareBasisOntoTransformBasis(this.transform, inertia);
+
+        if ((this.transform.properties() & Matrix4x3dc.PROPERTY_IDENTITY) == 0) {
+            var m = new Matrix3d();
+            var origin = this.transform.getTranslation(new Vector3d());
+
+            m.identity().scale(origin.lengthSquared());
+            inertia.add(m);
+
+            PhysUtil.outerProduct(origin, origin, m);
+            inertia.sub(m);
+        }
+    }
+
+    @Override
+    public @Nullable Vector3d clip(Vec3 from, Vec3 to, Vector3d clipped) {
+        var xfmInv = this.transform.invert(new Matrix4x3d());
+
+        var fromx = xfmInv.transformPosition(new Vector3d(from.x, from.y, from.z));
+        var tox = xfmInv.transformPosition(new Vector3d(to.x, to.y, to.z));
+
+        var clip = shape.clip(
+                new Vec3(fromx.x, fromx.y, fromx.z),
+                new Vec3(tox.x, tox.y, tox.z),
+                clipped
+        );
+
+        if (clip != null) {
+            return transform.transformPosition(clipped.set(clip));
+        }
+        return null;
+    }
+}

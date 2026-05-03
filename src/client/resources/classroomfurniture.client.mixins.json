@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "foundationgames.classroomfurniture.client.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "MinecraftMixin",
+    "MouseHandlerMixin",
+    "camerarotation.CameraMixin",
+    "camerarotation.EntityRenderDispatcherMixin",
+    "camerarotation.EntityRendererMixin",
+    "camerarotation.EntityRenderStateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
