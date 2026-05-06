@@ -26,6 +26,14 @@ public class PhysTransformedShape implements PhysShape {
     }
 
     @Override
+    public double getFaceOffsetAlongNormal(int face) {
+        var fn = new Vector3d();
+        this.getFaceNormal(face, fn);
+
+        return shape.getFaceOffsetAlongNormal(face) + transform.getTranslation(new Vector3d()).dot(fn);
+    }
+
+    @Override
     public int vertexCount() {
         return shape.vertexCount();
     }
@@ -47,16 +55,24 @@ public class PhysTransformedShape implements PhysShape {
     }
 
     @Override
-    public @Nullable PhysInterpen interpenFace(int face, Vector3dc vtx) {
+    public double volume() {
+        return shape.volume();
+    }
+
+    @Override
+    public boolean interpenFace(int face, Vector3dc vtx, PhysContact manifold) {
         var vtxLocal = new Vector3d(vtx);
         this.transform.invert(new Matrix4x3d()).transformPosition(vtxLocal);
 
-        var pen = shape.interpenFace(face, vtxLocal);
-        if (pen != null) {
-            pen = pen.transform(this.transform);
+        var manifoldLocal = new PhysContact();
+        if (shape.interpenFace(face, vtxLocal, manifoldLocal)) {
+            manifoldLocal.transform(this.transform);
+            manifold.interpens.addAll(manifoldLocal.interpens);
+
+            return true;
         }
 
-        return pen;
+        return false;
     }
 
     @Override
@@ -67,11 +83,12 @@ public class PhysTransformedShape implements PhysShape {
         if ((this.transform.properties() & Matrix4x3dc.PROPERTY_IDENTITY) == 0) {
             var m = new Matrix3d();
             var origin = this.transform.getTranslation(new Vector3d());
+            double v = shape.volume();
 
-            m.identity().scale(origin.lengthSquared());
+            m.identity().scale(origin.lengthSquared() * v);
             inertia.add(m);
 
-            PhysUtil.outerProduct(origin, origin, m);
+            PhysUtil.outerProduct(origin, origin, m).scale(v);
             inertia.sub(m);
         }
     }

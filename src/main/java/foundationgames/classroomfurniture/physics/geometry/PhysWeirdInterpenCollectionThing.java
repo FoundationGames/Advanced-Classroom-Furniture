@@ -9,7 +9,7 @@ import org.joml.Vector3dc;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PhysInterpen {
+public class PhysWeirdInterpenCollectionThing {
     public final List<Vector3d> points = new ArrayList<>();
     public final Vector3d direction = new Vector3d();
     public double penetration = Double.NEGATIVE_INFINITY;
@@ -25,7 +25,7 @@ public class PhysInterpen {
         surfaceB = null;
     }
 
-    public PhysInterpen transform(Matrix4x3dc xfm) {
+    public PhysWeirdInterpenCollectionThing transform(Matrix4x3dc xfm) {
         for (var point : points) {
             xfm.transformPosition(point);
         }
@@ -33,7 +33,7 @@ public class PhysInterpen {
         return this;
     }
 
-    public PhysInterpen tryCombine(PhysInterpen other) {
+    public PhysWeirdInterpenCollectionThing tryCombine(PhysWeirdInterpenCollectionThing other) {
         if (points.isEmpty()) {
             return other;
         }
@@ -52,7 +52,7 @@ public class PhysInterpen {
             return null;
         }
 
-        var result = new PhysInterpen();
+        var result = new PhysWeirdInterpenCollectionThing();
         result.points.addAll(points);
 
         var r = new Vector3d();
@@ -194,7 +194,7 @@ public class PhysInterpen {
         out.normalize();
     }
 
-    public PhysInterpen flipSelf() {
+    public PhysWeirdInterpenCollectionThing flipSelf() {
         direction.negate();
         var offset = new Vector3d(direction).mul(penetration);
         for (var point : points) {

@@ -32,6 +32,16 @@ public class PhysBox implements PhysShape {
     }
 
     @Override
+    public double getFaceOffsetAlongNormal(int face) {
+        return switch (face) {
+            case 0, 1 -> halfSize.y;
+            case 2, 3 -> halfSize.x;
+            case 4, 5 -> halfSize.z;
+            default -> 0;
+        };
+    }
+
+    @Override
     public int vertexCount() {
         return 8;
     }
@@ -55,20 +65,14 @@ public class PhysBox implements PhysShape {
         return origin.zero();
     }
 
-    protected double facePenetrationThreshold(int face) {
-        return switch (face) {
-            case 0, 1 -> halfSize.y;
-            case 2, 3 -> halfSize.x;
-            case 4, 5 -> halfSize.z;
-            default -> 0;
-        };
+    @Override
+    public double volume() {
+        return 8 * this.halfSize.x * this.halfSize.y * this.halfSize.z;
     }
 
     @Override
-    public @Nullable PhysInterpen interpenFace(int face, Vector3dc vtx) {
-        var interpen = new PhysInterpen();
-
-        double threshold = facePenetrationThreshold(face);
+    public boolean interpenFace(int face, Vector3dc vtx, PhysContact manifold) {
+        double threshold = getFaceOffsetAlongNormal(face);
 
         ToDoubleFunction<Vector3dc> projFunc = switch (face) {
             case 0 -> Vector3dc::y;
@@ -83,18 +87,16 @@ public class PhysBox implements PhysShape {
         double proj = projFunc.applyAsDouble(vtx);
 
         if (proj < threshold) {
-            interpen.points.add(new Vector3d(vtx));
+            var axis = new Vector3d();
+            getFaceNormal(face, axis);
+
             double pen = threshold - proj;
+            manifold.addContactIfValid(vtx, axis, pen);
 
-            if (pen > interpen.penetration) interpen.penetration = pen;
+            return true;
         }
 
-        if (!Double.isFinite(interpen.penetration)) {
-            return null;
-        }
-        getFaceNormal(face, interpen.direction);
-
-        return interpen;
+        return false;
     }
 
     @Override

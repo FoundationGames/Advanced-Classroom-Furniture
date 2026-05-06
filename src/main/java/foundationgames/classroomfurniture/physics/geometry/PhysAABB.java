@@ -22,17 +22,18 @@ public class PhysAABB extends PhysBox {
     public void inertiaTensor(Matrix3d inertia) {
         super.inertiaTensor(inertia);
         var m = new Matrix3d();
+        double v = volume();
 
-        m.scale(origin.lengthSquared());
+        m.scale(origin.lengthSquared() * v);
         inertia.add(m);
 
-        PhysUtil.outerProduct(origin, origin, m);
+        PhysUtil.outerProduct(origin, origin, m).scale(v);
         inertia.sub(m);
     }
 
     @Override
-    protected double facePenetrationThreshold(int face) {
-        return super.facePenetrationThreshold(face) + switch (face) {
+    public double getFaceOffsetAlongNormal(int face) {
+        return super.getFaceOffsetAlongNormal(face) + switch (face) {
             case 0 -> origin.y;
             case 1 -> -origin.y;
             case 2 -> origin.x;

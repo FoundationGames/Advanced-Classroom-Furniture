@@ -15,6 +15,7 @@ public interface PhysShape {
 
     int faceCount();
     void getFaceNormal(int face, Vector3d faceNormal);
+    double getFaceOffsetAlongNormal(int face);
 
     int vertexCount();
     void getVertex(int vertex, Vector3d vertexPos);
@@ -22,7 +23,9 @@ public interface PhysShape {
     double circumcircleSquaredRadius();
     Vector3d circumcircleOrigin(Vector3d origin);
 
-    @Nullable PhysInterpen interpenFace(int face, Vector3dc vtx);
+    double volume();
+
+    boolean interpenFace(int face, Vector3dc vtx, PhysContact manifold);
     void inertiaTensor(Matrix3d inertia);
 
     @Nullable Vector3d clip(Vec3 from, Vec3 to, Vector3d clipped);
@@ -57,98 +60,60 @@ public interface PhysShape {
         return halfDistSquared < first.circumcircleSquaredRadius() || halfDistSquared < second.circumcircleSquaredRadius();
     }
 
-    static @Nullable PhysInterpen interpen(PhysShape first, PhysShape second) {
+    static @Nullable PhysContact interpen(PhysShape first, PhysShape second) {
         if (!PhysShape.shapeCircumcirclesIntersect(first, second)) return null;
 
-        var penFaceFS = PhysShape.interpenFaceFeature(first, second);
-        if (penFaceFS == null) return null;
+        var ctFaceFS = PhysShape.interpenFaceFeature(first, second);
+        if (ctFaceFS == null) return null;
 
-        var penFaceSF = PhysShape.interpenFaceFeature(second, first);
-        if (penFaceSF == null) return null;
-        penFaceSF.flipSelf();
+        var ctFaceSF = PhysShape.interpenFaceFeature(second, first);
+        if (ctFaceSF == null) return null;
+        ctFaceSF.flip();
 
-        var penFaceEdges = PhysShape.interpenEdges(first, second);
-        if (penFaceEdges == null) return null;
+        var ctFaceEdges = PhysShape.interpenEdges(first, second);
+        if (ctFaceEdges == null) return null;
 
-        var combo = penFaceFS.tryCombine(penFaceSF);
-        if (combo != null) {
-            var combo2 = combo.tryCombine(penFaceEdges);
-            if (combo2 != null) {
-                if (combo2.points.isEmpty()) return null;
-                return combo2;
-            }
-
-            if (combo.penetration <= penFaceEdges.penetration) {
-                if (combo.points.isEmpty()) return null;
-                return combo;
-            }
-        }
-
-        if (penFaceFS.penetration <= penFaceSF.penetration && penFaceFS.penetration <= penFaceEdges.penetration) {
-            if (penFaceFS.points.isEmpty()) return null;
-            return penFaceFS;
-        }
-
-        if (penFaceSF.penetration <= penFaceEdges.penetration) {
-            if (penFaceSF.points.isEmpty()) return null;
-            return penFaceSF;
-        }
-
-        return penFaceEdges;
+        return PhysContact.mergedOrLeastPenetrating(ctFaceFS, ctFaceSF, ctFaceEdges);
     }
 
-    static @Nullable PhysInterpen interpenFaceFeature(PhysShape first, PhysShape second) {
-        var bannedSecondVerts = new ArrayList<Vector3d>();
-
-        PhysInterpen result = new PhysInterpen();
-        result.penetration = Double.POSITIVE_INFINITY;
+    static @Nullable PhysContact interpenFaceFeature(PhysShape first, PhysShape second) {
+        PhysContact result = null;
 
         var vtx = new Vector3d();
+
         for (int face = 0; face < first.faceCount(); face++) {
-            PhysInterpen faceResult = null;
+            boolean intersecting = false;
+            PhysContact faceResult = new PhysContact();
 
             for (int svi = 0; svi < second.vertexCount(); svi++) {
                 second.getVertex(svi, vtx);
 
-                var vtxResult = first.interpenFace(face, vtx);
-                if (vtxResult == null) {
-                    bannedSecondVerts.add(new Vector3d(vtx));
-                    continue;
-                }
-
-                if (faceResult == null) {
-                    faceResult = vtxResult;
-                    continue;
-                }
-
-                var combine = vtxResult.tryCombine(faceResult);
-                if (combine != null) {
-                    faceResult = combine;
-                    continue;
-                }
-
-                if (vtxResult.penetration > faceResult.penetration) {
-                    faceResult = vtxResult;
+                if (first.interpenFace(face, vtx, faceResult)) {
+                    intersecting = true;
                 }
             }
 
-            if (faceResult == null) {
-                return null; // Bodies are separated along this face
-            }
+            if (!intersecting) return null; // Failed separating axis test
 
-            if (faceResult.penetration < result.penetration) {
+            if (result == null || result.deepestDepth() > faceResult.deepestDepth()) {
                 result = faceResult;
             }
         }
 
-        for (var bv : bannedSecondVerts) {
-            result.points.removeIf(v -> v.distanceSquared(bv) < 1e-5);
+        if (result == null) return null;
+
+        var axis = new Vector3d();
+        for (int face = 0; face < first.faceCount(); face++) {
+            first.getFaceNormal(face, axis);
+            double faceOffset = first.getFaceOffsetAlongNormal(face);
+
+            result.keepContactsBehindPlaneOnly(axis, faceOffset);
         }
 
         return result;
     }
 
-    static @Nullable PhysInterpen interpenEdges(PhysShape first, PhysShape second) {
+    static @Nullable PhysContact interpenEdges(PhysShape first, PhysShape second) {
         var fvec = new Vector3d();
         var svec = new Vector3d();
         var vtx = new Vector3d();
@@ -244,17 +209,16 @@ public interface PhysShape {
             } else break;
         }
 
-        if (woundFirstPoints.isEmpty()) return new PhysInterpen();
-        if (woundSecondPoints.isEmpty()) return new PhysInterpen();
+        if (woundFirstPoints.isEmpty()) return new PhysContact();
+        if (woundSecondPoints.isEmpty()) return new PhysContact();
 
         var fEdgePos = new Vector3d();
         var fEdgeDir = new Vector3d();
         var sEdgePos = new Vector3d();
         var sEdgeDir = new Vector3d();
 
-        var result = new PhysInterpen();
-        result.direction.set(minPenAxis);
-        result.penetration = minFMax - minSMin;
+        var result = new PhysContact();
+        double penetration = minFMax - minSMin;
 
         for (int sEdge = 0; sEdge < woundSecondPoints.size(); sEdge++) {
             var sPt1 = woundSecondPoints.get(sEdge);
@@ -286,7 +250,7 @@ public interface PhysShape {
                     //var msg = String.format("(%.3f<%.3f<%.3f) and (%.3f<%.3f<%.3f) ", fPMin, fPCol, fPMax, sPMin, sPCol, sPMax);
 
                     if (fPMin <= fPCol && fPCol <= fPMax && sPMin <= sPCol && sPCol <= sPMax) {
-                        result.points.add(colPoint);
+                        result.addContactIfValid(colPoint, minPenAxis, penetration);
                     }
                 }
             }
@@ -315,6 +279,11 @@ public interface PhysShape {
         }
 
         @Override
+        public double getFaceOffsetAlongNormal(int face) {
+            return 0;
+        }
+
+        @Override
         public int vertexCount() {
             return 0;
         }
@@ -335,8 +304,13 @@ public interface PhysShape {
         }
 
         @Override
-        public @Nullable PhysInterpen interpenFace(int face, Vector3dc other) {
-            return null;
+        public double volume() {
+            return 0;
+        }
+
+        @Override
+        public boolean interpenFace(int face, Vector3dc vtx, PhysContact manifold) {
+            return false;
         }
 
         @Override
