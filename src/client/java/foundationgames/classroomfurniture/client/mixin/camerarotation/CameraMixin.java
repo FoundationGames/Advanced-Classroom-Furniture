@@ -2,7 +2,6 @@ package foundationgames.classroomfurniture.client.mixin.camerarotation;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.math.Axis;
 import foundationgames.classroomfurniture.entity.PhysicsSeatPropEntity;
 import net.minecraft.client.Camera;

@@ -1,7 +1,6 @@
 package foundationgames.classroomfurniture.entity;
 
 import foundationgames.classroomfurniture.PropDefinition;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;

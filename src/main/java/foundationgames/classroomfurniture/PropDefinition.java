@@ -171,12 +171,12 @@ public record PropDefinition(double mass, Set<PhysSolid> solids, Supplier<Entity
     );
 
     public static final Map<WoodType, PropDefinition> DESKS = CFUtil.buildMapFromStream(
-            WoodType.values(),
+            CFUtil.WOOD.stream(),
             wt -> new PropDefinition(7, DESK_SOLIDS, () -> CFEntities.DESKS.get(wt))
     );
 
     public static final Map<WoodType, PropDefinition> CHAIRS = CFUtil.buildMapFromStream(
-            WoodType.values(),
+            CFUtil.WOOD.stream(),
             wt -> new PropDefinition(3, CHAIR_SOLIDS, () -> CFEntities.CHAIRS.get(wt))
     );
 }

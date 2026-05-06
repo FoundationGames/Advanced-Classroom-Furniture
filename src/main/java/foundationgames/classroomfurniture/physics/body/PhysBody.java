@@ -554,8 +554,6 @@ public class PhysBody {
             var deepest = contact.deepest();
             if (deepest == null) continue;
 
-            //double pointWt = 1.0;// / contact.interpens.size();
-
             //System.out.println("CTR:" + colPoint + " DIR:" + contact.normal + " WT:" + contact.interpens.size() + " PEN:" + contact.deepestDepth());
 
             //System.out.println(contact.interpens);
@@ -631,118 +629,12 @@ public class PhysBody {
 
             body.transform.translateLocal(solvePush.set(contact.normal).mul(contact.deepestDepth()));
 
-//            avgStaticFrict *= angImpulse.length();
-//            avgKineticFrict *= angImpulse.length();
-//
-//            if (contact.points.size() > 1 && body.inverseMass > 0) {
-//                body.angularVelocity(angVel);
-//
-//                double angularImpulse = -angVel.dot(colNormal);
-//                angularImpulse /= invInertia.transform(colNormal, angImpulse).dot(colNormal);
-//
-//                if (Math.abs(angularImpulse) > avgStaticFrict) {
-//                    angularImpulse = avgKineticFrict * Math.signum(angularImpulse);
-//                }
-//                angImpulse.set(colNormal).mul(angularImpulse);
-//                body.applyImpulseAngular(angImpulse.mul(pointWt));
+//            double push = 0.1;
+//            if (interpen.penetration > push) {
+//                body.transform.translateLocal(solveTranslate.set(colNormal).mul(interpen.penetration - push));
 //            }
 //
-//            //System.out.println("CTR:" + colPoint + " DIR:" + contact.direction + " WT:" + contact.points.size() + " PEN:" + contact.penetration);
-//
-//            body.velocityAt(colPoint, vel).negate();
-//
-//            ctrToContact.set(ctr).sub(colPoint);
-//
-//            //colPoint.add(solvePush);
-//
-////            contact.getPenetratingNormal(penNormal);
-////            if (penNormal.isFinite()) {
-////                penNormal.cross(colNormal, rotAxis);
-////                double angle = Math.asin(rotAxis.length());
-////                if (angle > 0 && angle < 0.1) {
-////                    rotAxis.normalize();
-////
-////                    if (rotAxis.isFinite()) {
-////                        //System.out.println("WT=" + contact.points.size() + " NML=" + colNormal + " PML=" + penNormal + " ANG=" + angle + " AX=" + rotAxis);
-////                        //body.transform.rotate(angle, rotAxis.x, rotAxis.y, rotAxis.z);
-////                    }
-////                }
-////            }
-//
-//            // 2. Calculate the collision reaction impulse
-//            invInertia.transform(tangentC2C.set(ctrToContact).cross(colNormal));
-//            tangentC2C.cross(ctrToContact);
-//
-//            var movePush = new Vector3d();
-//            movePush.set(body.acceleration);
-//
-//            double normalVel = Math.max(0, vel.dot(colNormal));
-//            double restitution = Math.min(contact.surfaceA.restitution(), contact.surfaceB.restitution());
-//            //restitution *= 1 - Math.exp(-Math.abs(normalVel));
-//
-//            double impulseMagnitude = (1 + slop + restitution) * normalVel;
-//            impulseMagnitude /= body.inverseMass + tangentC2C.dot(colNormal);
-//
-//            reactImpulse.set(colNormal).mul(impulseMagnitude);
-//
-//            // 3. Calculate the friction impulses
-//            colNormal.normalize();
-//            PhysUtil.getComponentsInPlane(colNormal, vel, colTangent, 0);
-//
-//            double staticFrict = 0.5 * (contact.surfaceA.staticFriction() + contact.surfaceB.staticFriction());
-//            double kineticFrict = Math.min(staticFrict * 0.99, 0.5 * (contact.surfaceA.kineticFriction() + contact.surfaceB.kineticFriction()));
-//
-//            double staticFrictImpulse = staticFrict * impulseMagnitude;
-//            double kineticFrictImpulse = kineticFrict * impulseMagnitude;
-//
-//            if (colTangent.lengthSquared() > 0) {
-//                colTangent.normalize();
-//
-//                if (body.inverseMass > 0) {
-//                    invInertia.transform(tangentC2C.set(ctrToContact).cross(colTangent));
-//                    tangentC2C.cross(ctrToContact);
-//
-//                    double tangentImpulse = vel.dot(colTangent);
-//                    tangentImpulse /= body.inverseMass + tangentC2C.dot(colTangent);
-//
-//                    if (tangentImpulse > staticFrictImpulse) {
-//                        tangentImpulse = kineticFrictImpulse;
-//                    }
-//                    totalImpulse.set(colTangent).mul(tangentImpulse);
-//                }
-//            }
-//            if (contact.points.size() > 1 && body.inverseMass > 0) {
-//                body.angularVelocity(angVel);
-//
-//                double angularImpulse = -angVel.dot(colNormal);
-//                angularImpulse /= invInertia.transform(colNormal, angImpulse).dot(colNormal);
-//
-//                if (Math.abs(angularImpulse) > staticFrictImpulse) {
-//                    angularImpulse = kineticFrictImpulse * Math.signum(angularImpulse);
-//                }
-//                angImpulse.set(colNormal).mul(angularImpulse);
-//            }
-//
-//            // 4. Apply the impulses
-//            totalImpulse.add(reactImpulse);
-//
-//            body.applyImpulse(colPoint, totalImpulse);
-//            body.applyImpulseAngular(angImpulse);
-//
-//            totalImpulse.sub(solvePush);
-//
-//            if (body.linearMomentum.dot(colNormal) < 0) {
-//                PhysUtil.getComponentsInPlane(colNormal, body.linearMomentum, body.linearMomentum, 0);
-//            }
-//
-//            if (contact.points.size() >= 3) {
-//                for (var limit : body.directionalAccelLimit) {
-//                    if (limit.lengthSquared() <= 1e-7) {
-//                        limit.set(colNormal);
-//                        break;
-//                    }
-//                }
-//            }
+//            body.applyImpulseCG(solvePush.set(colNormal).mul(Math.min(interpen.penetration, push) * 0.2 / (dt * body.inverseMass)));
         }
     }
 }

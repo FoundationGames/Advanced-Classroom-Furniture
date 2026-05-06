@@ -9,9 +9,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.special.SpecialModelRenderers;
-import net.minecraft.world.level.block.state.properties.WoodType;
-
-import java.util.stream.Collectors;
 
 public class ClassroomFurnitureClient implements ClientModInitializer {
 	@Override
@@ -26,7 +23,7 @@ public class ClassroomFurnitureClient implements ClientModInitializer {
 				CFEntities.BLUE_PENCIL_SHARPENER,
 				PhysicsPropEntityRenderer.factory("pencil_sharpener", "main", "pencil_sharpener/blue"));
 
-		for (var wt : WoodType.values().collect(Collectors.toSet())) {
+		for (var wt : CFUtil.WOOD) {
 			var desk = CFEntities.DESKS.get(wt);
 			EntityRenderers.register(desk, PhysicsPropEntityRenderer.factory("desk", "main", "desk/" + wt.name()));
 

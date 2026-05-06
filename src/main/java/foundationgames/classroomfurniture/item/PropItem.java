@@ -7,7 +7,6 @@ import foundationgames.classroomfurniture.entity.PhysicsPropEntity;
 import foundationgames.classroomfurniture.physics.constraint.PhysConstraint;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
