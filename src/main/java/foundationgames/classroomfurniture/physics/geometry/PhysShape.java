@@ -22,6 +22,8 @@ public interface PhysShape {
     double circumcircleSquaredRadius();
     Vector3d circumcircleOrigin(Vector3d origin);
 
+    double volume();
+
     @Nullable PhysInterpen interpenFace(int face, Vector3dc vtx);
     void inertiaTensor(Matrix3d inertia);
 
@@ -332,6 +334,11 @@ public interface PhysShape {
         @Override
         public Vector3d circumcircleOrigin(Vector3d origin) {
             return origin.zero();
+        }
+
+        @Override
+        public double volume() {
+            return 0;
         }
 
         @Override

@@ -34,11 +34,11 @@ public enum CFItems {;
     public static final Item HAMMER = register("hammer", Item::new);
 
     public static final Map<WoodType, PropItem> DESKS = CFUtil.buildMapFromStream(
-            WoodType.values(),
+            CFUtil.WOOD.stream(),
             wt -> register(wt.name() + "_desk", p -> new PropItem(p, PropDefinition.DESKS.get(wt)))
     );
     public static final Map<WoodType, PropItem> CHAIRS = CFUtil.buildMapFromStream(
-            WoodType.values(),
+            CFUtil.WOOD.stream(),
             wt -> register(wt.name() + "_chair", p -> new PropItem(p, PropDefinition.CHAIRS.get(wt)))
     );
 

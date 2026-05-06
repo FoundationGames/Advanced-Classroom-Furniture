@@ -40,7 +40,6 @@ import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class PhysicsPropEntity extends Entity {

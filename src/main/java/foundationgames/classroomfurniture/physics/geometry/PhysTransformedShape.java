@@ -47,6 +47,11 @@ public class PhysTransformedShape implements PhysShape {
     }
 
     @Override
+    public double volume() {
+        return shape.volume();
+    }
+
+    @Override
     public @Nullable PhysInterpen interpenFace(int face, Vector3dc vtx) {
         var vtxLocal = new Vector3d(vtx);
         this.transform.invert(new Matrix4x3d()).transformPosition(vtxLocal);
@@ -67,11 +72,12 @@ public class PhysTransformedShape implements PhysShape {
         if ((this.transform.properties() & Matrix4x3dc.PROPERTY_IDENTITY) == 0) {
             var m = new Matrix3d();
             var origin = this.transform.getTranslation(new Vector3d());
+            double v = shape.volume();
 
-            m.identity().scale(origin.lengthSquared());
+            m.identity().scale(origin.lengthSquared() * v);
             inertia.add(m);
 
-            PhysUtil.outerProduct(origin, origin, m);
+            PhysUtil.outerProduct(origin, origin, m).scale(v);
             inertia.sub(m);
         }
     }

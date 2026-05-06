@@ -55,6 +55,11 @@ public class PhysBox implements PhysShape {
         return origin.zero();
     }
 
+    @Override
+    public double volume() {
+        return 8 * halfSize.x * halfSize.y * halfSize.z;
+    }
+
     protected double facePenetrationThreshold(int face) {
         return switch (face) {
             case 0, 1 -> halfSize.y;

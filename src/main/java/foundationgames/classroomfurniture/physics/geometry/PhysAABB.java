@@ -6,7 +6,6 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3d;
 import org.joml.Vector3d;
-import org.joml.Vector3dc;
 
 public class PhysAABB extends PhysBox {
     public final Vector3d origin = new Vector3d();
@@ -22,11 +21,12 @@ public class PhysAABB extends PhysBox {
     public void inertiaTensor(Matrix3d inertia) {
         super.inertiaTensor(inertia);
         var m = new Matrix3d();
+        double v = volume();
 
-        m.scale(origin.lengthSquared());
+        m.scale(origin.lengthSquared() * v);
         inertia.add(m);
 
-        PhysUtil.outerProduct(origin, origin, m);
+        PhysUtil.outerProduct(origin, origin, m).scale(v);
         inertia.sub(m);
     }
 

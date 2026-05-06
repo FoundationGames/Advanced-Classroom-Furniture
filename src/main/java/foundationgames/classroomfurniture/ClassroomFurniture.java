@@ -5,7 +5,6 @@ import foundationgames.classroomfurniture.item.CFItems;
 import foundationgames.classroomfurniture.network.GrabPropPackets;
 import foundationgames.classroomfurniture.physics.PhysSimulation;
 import net.fabricmc.api.ModInitializer;
-
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;

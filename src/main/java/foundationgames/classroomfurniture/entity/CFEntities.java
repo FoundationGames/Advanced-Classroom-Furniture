@@ -23,11 +23,11 @@ public enum CFEntities {;
     public static final EntityType<PhysicsPropEntity> PENCIL_SHARPENER_DRUM = registerProp("pencil_sharpener_drum", PropDefinition.PENCIL_SHARPENER_DRUM);
     public static final EntityType<PhysicsPropEntity> BLUE_PENCIL_SHARPENER = registerProp("blue_pencil_sharpener", PropDefinition.PENCIL_SHARPENER);
     public static final Map<WoodType, EntityType<PhysicsPropEntity>> DESKS = CFUtil.buildMapFromStream(
-            WoodType.values(),
+            CFUtil.WOOD.stream(),
             wt -> registerProp(wt.name() + "_desk", PropDefinition.DESKS.get(wt), new Vector3d(0, 6.0/16, 5.0/16))
     );
     public static final Map<WoodType, EntityType<PhysicsPropEntity>> CHAIRS = CFUtil.buildMapFromStream(
-            WoodType.values(),
+            CFUtil.WOOD.stream(),
             wt -> registerProp(wt.name() + "_chair", PropDefinition.CHAIRS.get(wt), new Vector3d(0, 5.0/16, -2.0/16))
     );
 

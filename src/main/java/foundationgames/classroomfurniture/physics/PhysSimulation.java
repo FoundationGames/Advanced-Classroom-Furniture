@@ -54,7 +54,7 @@ public class PhysSimulation {
             }
         }
 
-        var motionSolver = new PhysMotionSolver(staticSolids, solverBodies, constraints, 3);
+        var motionSolver = new PhysMotionSolver(staticSolids, solverBodies, constraints, 2);
 
         for (var pair : bodies.entrySet()) {
             var uuid = pair.getKey();
