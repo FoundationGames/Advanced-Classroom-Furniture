@@ -60,23 +60,23 @@ public interface PhysShape {
         return halfDistSquared < first.circumcircleSquaredRadius() || halfDistSquared < second.circumcircleSquaredRadius();
     }
 
-    static @Nullable PhysContact interpen(PhysShape first, PhysShape second) {
+    static @Nullable PhysContact interpen(PhysShape first, PhysShape second, double margin) {
         if (!PhysShape.shapeCircumcirclesIntersect(first, second)) return null;
 
-        var ctFaceFS = PhysShape.interpenFaceFeature(first, second);
+        var ctFaceFS = PhysShape.interpenFaceFeature(first, second, margin);
         if (ctFaceFS == null) return null;
 
-        var ctFaceSF = PhysShape.interpenFaceFeature(second, first);
+        var ctFaceSF = PhysShape.interpenFaceFeature(second, first, margin);
         if (ctFaceSF == null) return null;
         ctFaceSF.flip();
 
-        var ctFaceEdges = PhysShape.interpenEdges(first, second);
+        var ctFaceEdges = PhysShape.interpenEdges(first, second, margin);
         if (ctFaceEdges == null) return null;
 
         return PhysContact.mergedOrLeastPenetrating(ctFaceFS, ctFaceSF, ctFaceEdges);
     }
 
-    static @Nullable PhysContact interpenFaceFeature(PhysShape first, PhysShape second) {
+    static @Nullable PhysContact interpenFaceFeature(PhysShape first, PhysShape second, double margin) {
         PhysContact result = null;
 
         var vtx = new Vector3d();
@@ -84,6 +84,7 @@ public interface PhysShape {
         for (int face = 0; face < first.faceCount(); face++) {
             boolean intersecting = false;
             PhysContact faceResult = new PhysContact();
+            faceResult.manifoldMargin = margin;
 
             for (int svi = 0; svi < second.vertexCount(); svi++) {
                 second.getVertex(svi, vtx);
@@ -113,7 +114,7 @@ public interface PhysShape {
         return result;
     }
 
-    static @Nullable PhysContact interpenEdges(PhysShape first, PhysShape second) {
+    static @Nullable PhysContact interpenEdges(PhysShape first, PhysShape second, double margin) {
         var fvec = new Vector3d();
         var svec = new Vector3d();
         var vtx = new Vector3d();
@@ -209,15 +210,16 @@ public interface PhysShape {
             } else break;
         }
 
-        if (woundFirstPoints.isEmpty()) return new PhysContact();
-        if (woundSecondPoints.isEmpty()) return new PhysContact();
+        var result = new PhysContact();
+        result.manifoldMargin = margin;
+        if (woundFirstPoints.isEmpty()) return result;
+        if (woundSecondPoints.isEmpty()) return result;
 
         var fEdgePos = new Vector3d();
         var fEdgeDir = new Vector3d();
         var sEdgePos = new Vector3d();
         var sEdgeDir = new Vector3d();
 
-        var result = new PhysContact();
         double penetration = minFMax - minSMin;
 
         for (int sEdge = 0; sEdge < woundSecondPoints.size(); sEdge++) {

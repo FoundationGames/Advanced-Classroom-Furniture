@@ -29,6 +29,7 @@ public class PhysBody {
      */
     public final Set<PhysSolid> solids;
 
+    public double density = 1;
     public double inverseMass = 0;
     private final Matrix3d inverseInertia = new Matrix3d();
 
@@ -239,10 +240,10 @@ public class PhysBody {
         m.add(torque).mul(dt);
         this.angularMomentum.add(m);
 
-        if (wellSupported && this.angularMomentum.length() * this.inverseMass < 0.08) {
-            this.angularMomentum.mul(Math.exp(-120 * dt)); // Bad way to stop angular jitter
-        }
-
+//        if (wellSupported && this.angularMomentum.length() * this.inverseMass < 0.08) {
+//            this.angularMomentum.mul(Math.exp(-120 * dt)); // Bad way to stop angular jitter
+//        }
+//
         linearMomentum.mul(Math.exp(-linearDrag * dt));
         angularMomentum.mul(Math.exp(-angularDrag * dt));
     }
@@ -292,6 +293,12 @@ public class PhysBody {
     }
 
     public PhysBody calculateProperties() {
+        this.inverseMass = 0;
+        for (var s : solids) {
+            this.inverseMass += s.shape().volume() * this.density;
+        }
+        this.inverseMass = 1.0 / this.inverseMass;
+
         calculateInertia(this.inverseInertia).invert().scale(inverseMass);
         return this;
     }
@@ -481,17 +488,16 @@ public class PhysBody {
     public static void collideStaticSolids(PhysBody body, List<PhysSolid> solids, double dt) {
         var bsShapeWorld = new PhysTransformedShape();
         bsShapeWorld.transform.set(body.transform);
-
         var ctr = body.transform.getTranslation(new Vector3d());
-        solids.sort(Comparator.comparingDouble(s -> s.shape().circumcircleOrigin(new Vector3d()).distanceSquared(ctr)));
 
         var contactManifolds = new ArrayList<PhysContact>();
+        double margin = dt * 0.6;
 
         for (var bs : body.solids) {
             for (var solid : solids) {
                 bsShapeWorld.shape = bs.shape();
 
-                var contact = PhysShape.interpen(solid.shape(), bsShapeWorld);
+                var contact = PhysShape.interpen(solid.shape(), bsShapeWorld, margin);
                 if (contact == null) continue;
 
                 contact.firstSurface = bs.surface();
@@ -543,7 +549,7 @@ public class PhysBody {
         var vel = new Vector3d();
         var angVel = new Vector3d();
         var rContact = new Vector3d();
-        var rContactTangent = new Vector3d();
+        var rCrossSolveDir = new Vector3d();
         var invInertia = body.localInverseInertia(new Matrix3d());
 
         var reactImpulse = new Vector3d();
@@ -556,23 +562,64 @@ public class PhysBody {
 
             //System.out.println("CTR:" + colPoint + " DIR:" + contact.normal + " WT:" + contact.interpens.size() + " PEN:" + contact.deepestDepth());
 
-            //System.out.println(contact.interpens);
+            System.out.println(contact.interpens.size() + " -> " + contact.interpens);
 
-//            if (contact.interpens.size() > 2) {
-//                var d1 = new Vector3d(contact.interpens.get(1).pos).sub(contact.interpens.get(0).pos);
-//                var d2 = new Vector3d(contact.interpens.get(2).pos).sub(contact.interpens.get(0).pos);
-//                var nml = d1.cross(d2).normalize();
-//                if (nml.dot(contact.normal) < 0) nml.negate();
+            double depth = contact.deepestDepth();
+            double slop = 2 * margin;
+            double a = 0;
+            double b = 0.02;
+
+            for (int i = 0; i < 3; i++)
+            for (var pen : contact.interpens) {
+                colNormal.set(pen.interpen).normalize();
+                colPoint.set(pen.pos);
+
+                body.velocityAt(colPoint, vel);
+                rContact.set(ctr).sub(colPoint);
+
+                // 2. Calculate the collision reaction impulse
+                invInertia.transform(rCrossSolveDir.set(rContact).cross(colNormal));
+                rCrossSolveDir.cross(rContact);
+
+                double normalVel = Math.max(0, -vel.dot(colNormal));
+                double normalAccel = -body.acceleration.dot(colNormal);
+                double restitution = 0;//Math.min(contact.firstSurface.restitution(), pen.surface.restitution());
+
+                double impulseMagnitude = ((1 + restitution) * normalVel);
+                impulseMagnitude += (pen.interpen.length() * b) / dt;
+
+                impulseMagnitude /= body.inverseMass + rCrossSolveDir.dot(colNormal);
+
+                reactImpulse.set(colNormal).mul(impulseMagnitude);
+
+                // 3. Calculate the friction impulses
+                PhysUtil.getComponentsInPlane(colNormal, vel, colTangent, 0);
+
+                double staticFrict = 0.5 * (contact.firstSurface.staticFriction() + pen.surface.staticFriction());
+                double kineticFrict = Math.min(staticFrict * 0.99, 0.5 * (contact.firstSurface.kineticFriction() + pen.surface.kineticFriction()));
+
+                double staticFrictImpulse = staticFrict * impulseMagnitude;
+                double kineticFrictImpulse = kineticFrict * impulseMagnitude;
+
+                totalImpulse.zero();
+//                if (colTangent.lengthSquared() > 0) {
+//                    colTangent.normalize();
 //
-//                var axis = nml.cross(contact.normal, new Vector3d());
-//                if (axis.lengthSquared() > 0) {
-//                    axis.normalize();
+//                    if (body.inverseMass > 0) {
+//                        invInertia.transform(rCrossSolveDir.set(rContact).cross(colTangent));
+//                        rCrossSolveDir.cross(rContact);
 //
-//                    double angle = nml.angle(contact.normal);
+//                        double tangentImpulse = vel.dot(colTangent);
+//                        tangentImpulse /= body.inverseMass + rCrossSolveDir.dot(colTangent);
 //
-//                    body.transform.rotate(-angle, axis.x, axis.y, axis.z);
+//                        if (tangentImpulse > staticFrictImpulse) {
+//                            tangentImpulse = kineticFrictImpulse;
+//                        }
+//                        totalImpulse.set(colTangent).mul(-tangentImpulse);
+//                    }
 //                }
-//            }
+                body.applyImpulse(colPoint, reactImpulse);
+            }
 
             for (var pen : contact.interpens) {
                 colNormal.set(pen.interpen).normalize();
@@ -582,16 +629,17 @@ public class PhysBody {
                 rContact.set(ctr).sub(colPoint);
 
                 // 2. Calculate the collision reaction impulse
-                invInertia.transform(rContactTangent.set(rContact).cross(colNormal));
-                rContactTangent.cross(rContact);
+                invInertia.transform(rCrossSolveDir.set(rContact).cross(colNormal));
+                rCrossSolveDir.cross(rContact);
 
                 double normalVel = Math.max(0, -vel.dot(colNormal));
-                double restitution = Math.min(contact.firstSurface.restitution(), pen.surface.restitution());
+                double normalAccel = -body.acceleration.dot(colNormal);
+                double restitution = 0;//Math.min(contact.firstSurface.restitution(), pen.surface.restitution());
 
-                double impulseMagnitude = (1 + restitution) * normalVel;
-                impulseMagnitude /= body.inverseMass + rContactTangent.dot(colNormal);
+                double impulseMagnitude = ((1 + restitution) * normalVel);
+                impulseMagnitude += (pen.interpen.length() * b) / dt;
 
-                reactImpulse.set(colNormal).mul(impulseMagnitude);
+                impulseMagnitude /= body.inverseMass + rCrossSolveDir.dot(colNormal);
 
                 // 3. Calculate the friction impulses
                 PhysUtil.getComponentsInPlane(colNormal, vel, colTangent, 0);
@@ -607,11 +655,11 @@ public class PhysBody {
                     colTangent.normalize();
 
                     if (body.inverseMass > 0) {
-                        invInertia.transform(rContactTangent.set(rContact).cross(colTangent));
-                        rContactTangent.cross(rContact);
+                        invInertia.transform(rCrossSolveDir.set(rContact).cross(colTangent));
+                        rCrossSolveDir.cross(rContact);
 
                         double tangentImpulse = vel.dot(colTangent);
-                        tangentImpulse /= body.inverseMass + rContactTangent.dot(colTangent);
+                        tangentImpulse /= body.inverseMass + rCrossSolveDir.dot(colTangent);
 
                         if (tangentImpulse > staticFrictImpulse) {
                             tangentImpulse = kineticFrictImpulse;
@@ -619,22 +667,15 @@ public class PhysBody {
                         totalImpulse.set(colTangent).mul(-tangentImpulse);
                     }
                 }
-
-                // 4. Apply the impulses
-                totalImpulse.add(reactImpulse);
-
                 body.applyImpulse(colPoint, totalImpulse);
-                angImpulse.add(totalImpulse);
             }
 
-            body.transform.translateLocal(solvePush.set(contact.normal).mul(contact.deepestDepth()));
+            //body.transform.translateLocal(solveTranslate.set(colNormal).mul(depth - push));
 
-//            double push = 0.1;
-//            if (interpen.penetration > push) {
-//                body.transform.translateLocal(solveTranslate.set(colNormal).mul(interpen.penetration - push));
+//            if (depth > slop) {
+//                body.transform.translateLocal(solveTranslate.set(colNormal).mul((depth - slop) * 0.99));
 //            }
-//
-//            body.applyImpulseCG(solvePush.set(colNormal).mul(Math.min(interpen.penetration, push) * 0.2 / (dt * body.inverseMass)));
+            //body.applyImpulseCG(solvePush.set(contact.normal).mul(-depth * b * contact.interpens.size() / dt));
         }
     }
 }

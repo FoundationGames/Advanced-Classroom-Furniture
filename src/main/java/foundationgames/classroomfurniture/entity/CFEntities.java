@@ -3,6 +3,7 @@ package foundationgames.classroomfurniture.entity;
 import foundationgames.classroomfurniture.CFUtil;
 import foundationgames.classroomfurniture.ClassroomFurniture;
 import foundationgames.classroomfurniture.PropDefinition;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -30,6 +31,10 @@ public enum CFEntities {;
             CFUtil.WOOD.stream(),
             wt -> registerProp(wt.name() + "_chair", PropDefinition.CHAIRS.get(wt), new Vector3d(0, 5.0/16, -2.0/16))
     );
+
+    public static final EntityType<PhysicsPropEntity> TESTBOX = FabricLoader.getInstance().isDevelopmentEnvironment() ?
+            registerProp("testbox", PropDefinition.TESTBOX) : null;
+
 
     public static final EntityType<PhysicsConstraintEntity> CONSTRAINT = register("physics_constraint",
             k -> EntityType.Builder.of(PhysicsConstraintEntity::new, MobCategory.AMBIENT)

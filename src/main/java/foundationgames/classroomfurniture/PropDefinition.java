@@ -6,23 +6,25 @@ import foundationgames.classroomfurniture.physics.body.PhysSolid;
 import foundationgames.classroomfurniture.physics.body.PhysSurface;
 import foundationgames.classroomfurniture.physics.geometry.PhysAABB;
 import foundationgames.classroomfurniture.physics.geometry.PhysBox;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.state.properties.WoodType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public record PropDefinition(double mass, Set<PhysSolid> solids, Supplier<EntityType<PhysicsPropEntity>> entity) {
+public record PropDefinition(double density, Set<PhysSolid> solids, Supplier<EntityType<PhysicsPropEntity>> entity) {
     public static final PropDefinition BRICK = new PropDefinition(
-            2, Set.of(
+            1890, Set.of(
                     new PhysSolid(
                             new PhysSurface(0, 0.5, 0.6),
                             new PhysBox().setPx(7, 3, 4)
                     )
             ), () -> CFEntities.BRICK);
     public static final PropDefinition PENCIL_SHARPENER_DRUM = new PropDefinition(
-            0.1,
+            4320,
             Set.of(
                     new PhysSolid(
                             new PhysSurface(0.1, 0.1, 0.2),
@@ -42,7 +44,7 @@ public record PropDefinition(double mass, Set<PhysSolid> solids, Supplier<Entity
                     )
             ), () -> CFEntities.PENCIL_SHARPENER_DRUM);
     public static final PropDefinition PENCIL_SHARPENER = new PropDefinition(
-            0.5,
+            320,
             Set.of(
                     new PhysSolid(
                             new PhysSurface(0, 0.5, 0.6),
@@ -172,11 +174,18 @@ public record PropDefinition(double mass, Set<PhysSolid> solids, Supplier<Entity
 
     public static final Map<WoodType, PropDefinition> DESKS = CFUtil.buildMapFromStream(
             CFUtil.WOOD.stream(),
-            wt -> new PropDefinition(7, DESK_SOLIDS, () -> CFEntities.DESKS.get(wt))
+            wt -> new PropDefinition(3970, DESK_SOLIDS, () -> CFEntities.DESKS.get(wt))
     );
 
     public static final Map<WoodType, PropDefinition> CHAIRS = CFUtil.buildMapFromStream(
             CFUtil.WOOD.stream(),
-            wt -> new PropDefinition(3, CHAIR_SOLIDS, () -> CFEntities.CHAIRS.get(wt))
+            wt -> new PropDefinition(3970, CHAIR_SOLIDS, () -> CFEntities.CHAIRS.get(wt))
     );
+
+    public static final @Nullable PropDefinition TESTBOX = FabricLoader.getInstance().isDevelopmentEnvironment() ?
+            new PropDefinition(
+                    1,
+                    Set.of(new PhysSolid(new PhysSurface(0.2, 0.23, 0.4), new PhysBox().set(1, 1, 1))),
+                    () -> null
+            ) : null;
 }

@@ -14,12 +14,11 @@ import java.util.HashSet;
 import java.util.List;
 
 public class PhysContact {
-    public LongSet secondSolidHashes = new LongOpenHashSet();
     public PhysSurface firstSurface = PhysSurface.EMPTY;
     public final List<Interpen> interpens = new ArrayList<>();
     public final Vector3d normal = new Vector3d();
     public double manifoldOrigin = 0; // Offset of the contact manifold plane along the normal direction
-    public double manifoldMargin = 1e-5; // Half-thickness of contact manifold plane
+    public double manifoldMargin = 5e-2; // Half-thickness of contact manifold plane
 
     public Vector3d faceResolvingAxis = new Vector3d();
     public Vector3d faceResolvingAngle = new Vector3d();
@@ -97,7 +96,6 @@ public class PhysContact {
         }
 
         this.interpens.addAll(other.interpens);
-        this.secondSolidHashes.addAll(other.secondSolidHashes);
         this.computeManifold();
         return this;
     }
@@ -106,30 +104,33 @@ public class PhysContact {
         if (this.interpens.isEmpty()) return other;
         if (other.interpens.isEmpty()) return this;
 
-        boolean chooseLP = this.normal.dot(other.normal) < 0.98;
+        return this.deepestDepth() < other.deepestDepth() ? this : other;
 
-        if (!chooseLP) for (var o : other.interpens) {
-            if (!isInManifoldPlane(o.pos)) {
-                chooseLP = true;
-                break;
-            }
-        }
-
-        if (chooseLP) {
-            return this.deepestDepth() < other.deepestDepth() ? this : other;
-        }
-
-        for (var i : other.interpens) {
-            double dpth = i.interpen.length();
-            if (i.interpen.dot(normal) / dpth < 0.9) {
-                this.interpens.add(new Interpen(i.pos, new Vector3d(normal).mul(dpth)));
-            } else {
-                this.interpens.add(i);
-            }
-        }
-        this.secondSolidHashes.addAll(other.secondSolidHashes);
-        this.computeManifold();
-        return this;
+//        boolean chooseLP = this.normal.dot(other.normal) < 0.98;
+//
+//        if (!chooseLP) for (var o : other.interpens) {
+//            if (!isInManifoldPlane(o.pos)) {
+//                chooseLP = true;
+//                break;
+//            }
+//        }
+//
+//        if (chooseLP) {
+//            return this.deepestDepth() < other.deepestDepth() ? this : other;
+//        }
+//
+//        for (var i : other.interpens) {
+//            double dpth = i.interpen.length();
+//            if (i.interpen.dot(normal) / dpth < 0.9) {
+//                this.interpens.add(new Interpen(i.pos, new Vector3d(normal).mul(dpth)));
+//            } else {
+//                this.interpens.add(i);
+//            }
+//        }
+//        this.interpens.addAll(other.interpens);
+//
+//        this.computeManifold();
+//        return this;
     }
 
     public @Nullable Interpen deepest() {

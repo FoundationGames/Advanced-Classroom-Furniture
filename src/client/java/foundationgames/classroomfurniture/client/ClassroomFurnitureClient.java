@@ -6,6 +6,7 @@ import foundationgames.classroomfurniture.client.entity.PhysicsPropEntityRendere
 import foundationgames.classroomfurniture.client.item.PropModelSpecialRenderer;
 import foundationgames.classroomfurniture.entity.CFEntities;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.special.SpecialModelRenderers;
@@ -22,6 +23,12 @@ public class ClassroomFurnitureClient implements ClientModInitializer {
 		EntityRenderers.register(
 				CFEntities.BLUE_PENCIL_SHARPENER,
 				PhysicsPropEntityRenderer.factory("pencil_sharpener", "main", "pencil_sharpener/blue"));
+
+		if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
+			EntityRenderers.register(
+					CFEntities.TESTBOX,
+					PhysicsPropEntityRenderer.factory("box", "main", "box"));
+		}
 
 		for (var wt : CFUtil.WOOD) {
 			var desk = CFEntities.DESKS.get(wt);

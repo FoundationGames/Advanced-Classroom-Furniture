@@ -7,6 +7,9 @@ import foundationgames.classroomfurniture.physics.constraint.PhysConstraint;
 import foundationgames.classroomfurniture.physics.geometry.PhysAABB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.joml.Vector3d;
 
 import java.util.ArrayList;
@@ -54,10 +57,9 @@ public class PhysSimulation {
             }
         }
 
-        var motionSolver = new PhysMotionSolver(staticSolids, solverBodies, constraints, 2);
+        var motionSolver = new PhysMotionSolver(staticSolids, solverBodies, constraints, 3);
 
         for (var pair : bodies.entrySet()) {
-            var uuid = pair.getKey();
             var body = pair.getValue();
             if (!body.remote) {
                 body.motionSanityCheck();
@@ -66,21 +68,30 @@ public class PhysSimulation {
 
                 var surface = new PhysSurface(0, 0.3, 0.4);
 
+                var combinedShape = new VoxelShape[] {Shapes.empty()};
                 BlockPos.betweenClosedStream(bounds).forEach(pos -> {
                     var shape = level.getBlockState(pos).getCollisionShape(level, pos);
 
-                    shape.forAllBoxes((x1, y1, z1, x2, y2, z2) ->
-                            staticSolids.add(new PhysSolid(surface, new PhysAABB()
-                                    .setAABB(x1 + pos.getX(),
-                                            y1 + pos.getY(),
-                                            z1 + pos.getZ(),
-                                            x2 + pos.getX(),
-                                            y2 + pos.getY(),
-                                            z2 + pos.getZ()
-                                    )
-                            ))
+                    shape.forAllBoxes(
+                            (x1, y1, z1, x2, y2, z2) ->
+                                    combinedShape[0] = Shapes.joinUnoptimized(
+                                            combinedShape[0],
+                                            Shapes.box(
+                                                    x1 + pos.getX(),
+                                                    y1 + pos.getY(),
+                                                    z1 + pos.getZ(),
+                                                    x2 + pos.getX(),
+                                                    y2 + pos.getY(),
+                                                    z2 + pos.getZ()
+                                            ),
+                                            BooleanOp.OR)
                     );
                 });
+
+                combinedShape[0].forAllBoxes(
+                        (x1, y1, z1, x2, y2, z2) ->
+                                staticSolids.add(new PhysSolid(surface, new PhysAABB().setAABB(x1, y1, z1, x2, y2, z2)))
+                );
 
                 solverBodies.add(body);
             }
