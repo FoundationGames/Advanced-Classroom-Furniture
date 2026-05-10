@@ -14,7 +14,6 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -542,19 +541,15 @@ public class PhysBody {
         var colPoint = new Vector3d();
         var colTangent = new Vector3d();
 
-        var solvePush = new Vector3d();
-        var solveTranslate = new Vector3d();
-        var rotAxis = new Vector3d();
+        var solve = new Vector3d();
 
         var vel = new Vector3d();
-        var angVel = new Vector3d();
         var rContact = new Vector3d();
         var rCrossSolveDir = new Vector3d();
         var invInertia = body.localInverseInertia(new Matrix3d());
 
         var reactImpulse = new Vector3d();
-        var totalImpulse = new Vector3d();
-        var angImpulse = new Vector3d();
+        var slideImpulse = new Vector3d();
 
         for (var contact : contactManifolds) {
             var deepest = contact.deepest();
@@ -562,15 +557,17 @@ public class PhysBody {
 
             //System.out.println("CTR:" + colPoint + " DIR:" + contact.normal + " WT:" + contact.interpens.size() + " PEN:" + contact.deepestDepth());
 
-            System.out.println(contact.interpens.size() + " -> " + contact.interpens);
+            //System.out.println(contact.interpens.size() + " -> " + contact.interpens);
 
             double depth = contact.deepestDepth();
-            double slop = 2 * margin;
-            double a = 0;
-            double b = 0.02;
+            double maxPen = margin;
+            double slop = 0.005;
+            double a = 0.1;
+            double b = 18;
 
-            for (int i = 0; i < 3; i++)
-            for (var pen : contact.interpens) {
+            double ptwt = Math.min(1.0, 2.0 / contact.interpens.size());
+
+            for (int i = 0; i < 4; i++) for (var pen : contact.interpens) {
                 colNormal.set(pen.interpen).normalize();
                 colPoint.set(pen.pos);
 
@@ -583,10 +580,10 @@ public class PhysBody {
 
                 double normalVel = Math.max(0, -vel.dot(colNormal));
                 double normalAccel = -body.acceleration.dot(colNormal);
-                double restitution = 0;//Math.min(contact.firstSurface.restitution(), pen.surface.restitution());
+                double restitution = Math.min(contact.firstSurface.restitution(), pen.surface.restitution());
 
                 double impulseMagnitude = ((1 + restitution) * normalVel);
-                impulseMagnitude += (pen.interpen.length() * b) / dt;
+                impulseMagnitude += (Math.max(0, pen.interpen.length() - slop) * b * (1 + normalAccel * a)) * dt;
 
                 impulseMagnitude /= body.inverseMass + rCrossSolveDir.dot(colNormal);
 
@@ -601,56 +598,7 @@ public class PhysBody {
                 double staticFrictImpulse = staticFrict * impulseMagnitude;
                 double kineticFrictImpulse = kineticFrict * impulseMagnitude;
 
-                totalImpulse.zero();
-//                if (colTangent.lengthSquared() > 0) {
-//                    colTangent.normalize();
-//
-//                    if (body.inverseMass > 0) {
-//                        invInertia.transform(rCrossSolveDir.set(rContact).cross(colTangent));
-//                        rCrossSolveDir.cross(rContact);
-//
-//                        double tangentImpulse = vel.dot(colTangent);
-//                        tangentImpulse /= body.inverseMass + rCrossSolveDir.dot(colTangent);
-//
-//                        if (tangentImpulse > staticFrictImpulse) {
-//                            tangentImpulse = kineticFrictImpulse;
-//                        }
-//                        totalImpulse.set(colTangent).mul(-tangentImpulse);
-//                    }
-//                }
-                body.applyImpulse(colPoint, reactImpulse);
-            }
-
-            for (var pen : contact.interpens) {
-                colNormal.set(pen.interpen).normalize();
-                colPoint.set(pen.pos);
-
-                body.velocityAt(colPoint, vel);
-                rContact.set(ctr).sub(colPoint);
-
-                // 2. Calculate the collision reaction impulse
-                invInertia.transform(rCrossSolveDir.set(rContact).cross(colNormal));
-                rCrossSolveDir.cross(rContact);
-
-                double normalVel = Math.max(0, -vel.dot(colNormal));
-                double normalAccel = -body.acceleration.dot(colNormal);
-                double restitution = 0;//Math.min(contact.firstSurface.restitution(), pen.surface.restitution());
-
-                double impulseMagnitude = ((1 + restitution) * normalVel);
-                impulseMagnitude += (pen.interpen.length() * b) / dt;
-
-                impulseMagnitude /= body.inverseMass + rCrossSolveDir.dot(colNormal);
-
-                // 3. Calculate the friction impulses
-                PhysUtil.getComponentsInPlane(colNormal, vel, colTangent, 0);
-
-                double staticFrict = 0.5 * (contact.firstSurface.staticFriction() + pen.surface.staticFriction());
-                double kineticFrict = Math.min(staticFrict * 0.99, 0.5 * (contact.firstSurface.kineticFriction() + pen.surface.kineticFriction()));
-
-                double staticFrictImpulse = staticFrict * impulseMagnitude;
-                double kineticFrictImpulse = kineticFrict * impulseMagnitude;
-
-                totalImpulse.zero();
+                slideImpulse.zero();
                 if (colTangent.lengthSquared() > 0) {
                     colTangent.normalize();
 
@@ -658,24 +606,24 @@ public class PhysBody {
                         invInertia.transform(rCrossSolveDir.set(rContact).cross(colTangent));
                         rCrossSolveDir.cross(rContact);
 
-                        double tangentImpulse = vel.dot(colTangent);
+                        double tangentImpulse = vel.dot(colTangent) * 1.59;
                         tangentImpulse /= body.inverseMass + rCrossSolveDir.dot(colTangent);
 
                         if (tangentImpulse > staticFrictImpulse) {
                             tangentImpulse = kineticFrictImpulse;
                         }
-                        totalImpulse.set(colTangent).mul(-tangentImpulse);
+                        slideImpulse.set(colTangent).mul(-tangentImpulse);
                     }
                 }
-                body.applyImpulse(colPoint, totalImpulse);
+
+                reactImpulse.add(slideImpulse);
+
+                body.applyImpulse(colPoint, reactImpulse.mul(ptwt));
             }
 
-            //body.transform.translateLocal(solveTranslate.set(colNormal).mul(depth - push));
-
-//            if (depth > slop) {
-//                body.transform.translateLocal(solveTranslate.set(colNormal).mul((depth - slop) * 0.99));
-//            }
-            //body.applyImpulseCG(solvePush.set(contact.normal).mul(-depth * b * contact.interpens.size() / dt));
+            if (depth > maxPen) {
+                body.transform.translateLocal(solve.set(colNormal).mul(depth - maxPen));
+            }
         }
     }
 }

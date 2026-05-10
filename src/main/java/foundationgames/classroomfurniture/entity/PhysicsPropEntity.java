@@ -196,8 +196,11 @@ public class PhysicsPropEntity extends Entity {
                         var targetPose = headPose.mul(grab.grabRelativePose, new Matrix4x3d());
 
                         var targetCG = targetPose.getTranslation(new Vector3d());
-                        var targetAxisZ = new Vector3d(0, 0, 1);//targetPose.getColumn(2, new Vector3d());
-                        var targetAxisY = new Vector3d(0, 1, 0);//targetPose.getColumn(1, new Vector3d());
+                        //var targetAxisZ = new Vector3d(0, 0, 1);
+                        //var targetAxisY = new Vector3d(0, 1, 0);
+
+                        var targetAxisZ = targetPose.getColumn(2, new Vector3d());
+                        var targetAxisY = targetPose.getColumn(1, new Vector3d());
 
                         var currentCG = body.transform.getTranslation(new Vector3d());
                         var travel = targetCG.sub(currentCG, new Vector3d()).mul(24);
