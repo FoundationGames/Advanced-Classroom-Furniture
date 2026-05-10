@@ -93,10 +93,10 @@ public enum CFItems {;
 
                     var rng = level.getRandom();
                     var look = player.getHeadLookAngle();
-                    var vel = player.getDeltaMovement();
+                    var vel = player.getDeltaMovement().scale(0.3);
 
                     flyingBrick.setPos(player.getEyePosition().add(player.getHeadLookAngle().scale(0.7)));
-                    flyingBrick.externalImpulse.set(look.x, look.y, look.z).mul(0.5).add(vel.x, vel.y, vel.z);
+                    flyingBrick.externalImpulse.set(look.x, look.y, look.z).mul(0.58).add(vel.x, vel.y + 0.1, vel.z);
                     flyingBrick.externalAngularImpulse.set(rng.nextDouble(), rng.nextDouble(), rng.nextDouble()).mul(0.005);
 
                     level.addFreshEntity(flyingBrick);

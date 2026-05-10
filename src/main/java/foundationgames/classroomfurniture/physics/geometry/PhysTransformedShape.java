@@ -60,14 +60,14 @@ public class PhysTransformedShape implements PhysShape {
     }
 
     @Override
-    public boolean interpenFace(int face, Vector3dc vtx, PhysContact manifold) {
+    public boolean interpenFace(int face, Vector3dc vtx, PhysCollision manifold) {
         var vtxLocal = new Vector3d(vtx);
         this.transform.invert(new Matrix4x3d()).transformPosition(vtxLocal);
 
-        var manifoldLocal = new PhysContact();
+        var manifoldLocal = new PhysCollision();
         if (shape.interpenFace(face, vtxLocal, manifoldLocal)) {
             manifoldLocal.transform(this.transform);
-            manifold.interpens.addAll(manifoldLocal.interpens);
+            manifold.contacts.addAll(manifoldLocal.contacts);
 
             return true;
         }

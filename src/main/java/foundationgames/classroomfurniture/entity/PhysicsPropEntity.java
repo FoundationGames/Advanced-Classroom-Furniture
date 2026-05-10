@@ -144,15 +144,17 @@ public class PhysicsPropEntity extends Entity {
             var body = getPhysicsBody();
             AABB bounds = null;
 
-            try {
-                body.mutex.acquire();
-                bounds = body.bounds();
-                body.mutex.release();
-            } catch (InterruptedException ignored) {
-            }
+            if (body != null) {
+                try {
+                    body.mutex.acquire();
+                    bounds = body.bounds();
+                    body.mutex.release();
+                } catch (InterruptedException ignored) {
+                }
 
-            if (bounds != null) {
-                return bounds;
+                if (bounds != null) {
+                    return bounds;
+                }
             }
         }
 
@@ -223,7 +225,7 @@ public class PhysicsPropEntity extends Entity {
                     }
                 } else {
                     body.acceleration.set(0, -PhysBody.GRAVITY, 0);
-//                    body.acceleration.zero();
+                    //body.acceleration.zero();
 //                    body.linearMomentum.zero();
 //                    body.angularMomentum.zero();
                 }

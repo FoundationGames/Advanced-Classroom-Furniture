@@ -25,7 +25,7 @@ public interface PhysShape {
 
     double volume();
 
-    boolean interpenFace(int face, Vector3dc vtx, PhysContact manifold);
+    boolean interpenFace(int face, Vector3dc vtx, PhysCollision manifold);
     void inertiaTensor(Matrix3d inertia);
 
     @Nullable Vector3d clip(Vec3 from, Vec3 to, Vector3d clipped);
@@ -60,30 +60,30 @@ public interface PhysShape {
         return halfDistSquared < first.circumcircleSquaredRadius() || halfDistSquared < second.circumcircleSquaredRadius();
     }
 
-    static @Nullable PhysContact interpen(PhysShape first, PhysShape second, double margin) {
+    static @Nullable PhysCollision collide(PhysShape first, PhysShape second, double margin) {
         if (!PhysShape.shapeCircumcirclesIntersect(first, second)) return null;
 
-        var ctFaceFS = PhysShape.interpenFaceFeature(first, second, margin);
+        var ctFaceFS = PhysShape.collideFaceFeature(first, second, margin);
         if (ctFaceFS == null) return null;
 
-        var ctFaceSF = PhysShape.interpenFaceFeature(second, first, margin);
+        var ctFaceSF = PhysShape.collideFaceFeature(second, first, margin);
         if (ctFaceSF == null) return null;
         ctFaceSF.flip();
 
-        var ctFaceEdges = PhysShape.interpenEdges(first, second, margin);
+        var ctFaceEdges = PhysShape.collideEdges(first, second, margin);
         if (ctFaceEdges == null) return null;
 
-        return PhysContact.mergedOrLeastPenetrating(ctFaceFS, ctFaceSF, ctFaceEdges);
+        return PhysCollision.mergedOrLeastPenetrating(ctFaceFS, ctFaceSF, ctFaceEdges);
     }
 
-    static @Nullable PhysContact interpenFaceFeature(PhysShape first, PhysShape second, double margin) {
-        PhysContact result = null;
+    static @Nullable PhysCollision collideFaceFeature(PhysShape first, PhysShape second, double margin) {
+        PhysCollision result = null;
 
         var vtx = new Vector3d();
 
         for (int face = 0; face < first.faceCount(); face++) {
             boolean intersecting = false;
-            PhysContact faceResult = new PhysContact();
+            PhysCollision faceResult = new PhysCollision();
             faceResult.manifoldMargin = margin;
 
             for (int svi = 0; svi < second.vertexCount(); svi++) {
@@ -114,7 +114,7 @@ public interface PhysShape {
         return result;
     }
 
-    static @Nullable PhysContact interpenEdges(PhysShape first, PhysShape second, double margin) {
+    static @Nullable PhysCollision collideEdges(PhysShape first, PhysShape second, double margin) {
         var fvec = new Vector3d();
         var svec = new Vector3d();
         var vtx = new Vector3d();
@@ -210,7 +210,7 @@ public interface PhysShape {
             } else break;
         }
 
-        var result = new PhysContact();
+        var result = new PhysCollision();
         result.manifoldMargin = margin;
         if (woundFirstPoints.isEmpty()) return result;
         if (woundSecondPoints.isEmpty()) return result;
@@ -311,7 +311,7 @@ public interface PhysShape {
         }
 
         @Override
-        public boolean interpenFace(int face, Vector3dc vtx, PhysContact manifold) {
+        public boolean interpenFace(int face, Vector3dc vtx, PhysCollision manifold) {
             return false;
         }
 

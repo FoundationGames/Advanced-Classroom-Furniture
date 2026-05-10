@@ -71,7 +71,7 @@ public class PhysBox implements PhysShape {
     }
 
     @Override
-    public boolean interpenFace(int face, Vector3dc vtx, PhysContact manifold) {
+    public boolean interpenFace(int face, Vector3dc vtx, PhysCollision manifold) {
         double threshold = getFaceOffsetAlongNormal(face);
 
         ToDoubleFunction<Vector3dc> projFunc = switch (face) {
