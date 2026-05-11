@@ -1,0 +1,33 @@
+{
+  "values": [
+    "classroomfurniture:blue_pencil_sharpener",
+    "classroomfurniture:pencil_sharpener_drum",
+    "classroomfurniture:brick",
+    
+    "classroomfurniture:oak_desk",
+    "classroomfurniture:birch_desk",
+    "classroomfurniture:spruce_desk",
+    "classroomfurniture:jungle_desk",
+    "classroomfurniture:acacia_desk",
+    "classroomfurniture:dark_oak_desk",
+    "classroomfurniture:pale_oak_desk",
+    "classroomfurniture:mangrove_desk",
+    "classroomfurniture:cherry_desk",
+    "classroomfurniture:bamboo_desk",
+    "classroomfurniture:crimson_desk",
+    "classroomfurniture:warped_desk",
+    
+    "classroomfurniture:oak_chair",
+    "classroomfurniture:birch_chair",
+    "classroomfurniture:spruce_chair",
+    "classroomfurniture:jungle_chair",
+    "classroomfurniture:acacia_chair",
+    "classroomfurniture:dark_oak_chair",
+    "classroomfurniture:pale_oak_chair",
+    "classroomfurniture:mangrove_chair",
+    "classroomfurniture:cherry_chair",
+    "classroomfurniture:bamboo_chair",
+    "classroomfurniture:crimson_chair",
+    "classroomfurniture:warped_chair"
+  ]
+}

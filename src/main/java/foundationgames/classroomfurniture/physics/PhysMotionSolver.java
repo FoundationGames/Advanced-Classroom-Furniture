@@ -10,19 +10,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PhysMotionSolver {
+public class PhysMotionSolver implements PhysTicker {
     public final List<PhysSolid> staticSolids;
     public final List<PhysBody> bodies;
-    public final List<PhysConstraintSolution> constraints;
+    public final List<ConstrainedBodyPair> constraints;
     public final int substeps;
 
-    public PhysMotionSolver(List<PhysSolid> staticSolids, List<PhysBody> bodies, List<PhysConstraintSolution> constraints, int substeps) {
+    public PhysMotionSolver(List<PhysSolid> staticSolids, List<PhysBody> bodies, List<ConstrainedBodyPair> constraints, int substeps) {
         this.staticSolids = staticSolids;
         this.bodies = bodies;
         this.constraints = constraints;
         this.substeps = substeps;
     }
 
+    @Override
     public void tick() {
         try {
             double dt = PhysSimulation.DT_TICK / substeps;
@@ -93,5 +94,5 @@ public class PhysMotionSolver {
         }
     }
 
-    public record PhysConstraintSolution(PhysConstraint constraint, PhysBody first, PhysBody second) {}
+    public record ConstrainedBodyPair(PhysConstraint constraint, PhysBody first, PhysBody second) {}
 }

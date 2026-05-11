@@ -57,6 +57,7 @@ public class PhysBody {
     public final Set<PhysCollision> collisions = new HashSet<>();
 
     public boolean sleep = false;
+    public boolean wellSupported = false;
     public boolean remote = true;
 
     public UUID uuid = UUID.randomUUID();
@@ -163,6 +164,13 @@ public class PhysBody {
         return vel;
     }
 
+    public boolean isEffectivelyAtRest() {
+        if (!wellSupported) return false;
+
+        var v = new Vector3d();
+        return velocityCG(v).lengthSquared() < 0.0005 && angularVelocity(v).lengthSquared() < 0.0005;
+    }
+
     public void applyImpulseCG(Vector3dc impulse) {
         if (sleep) return;
 
@@ -227,7 +235,6 @@ public class PhysBody {
         if (sleep) return;
 
         var m = new Vector3d();
-        boolean wellSupported = false;
 
         m.zero();
         if (inverseMass > 0) m.set(acceleration).div(inverseMass);
@@ -239,10 +246,6 @@ public class PhysBody {
         m.add(torque).mul(dt);
         this.angularMomentum.add(m);
 
-//        if (wellSupported && this.angularMomentum.length() * this.inverseMass < 0.08) {
-//            this.angularMomentum.mul(Math.exp(-120 * dt)); // Bad way to stop angular jitter
-//        }
-//
         linearMomentum.mul(Math.exp(-linearDrag * dt));
         angularMomentum.mul(Math.exp(-angularDrag * dt));
     }
@@ -325,7 +328,7 @@ public class PhysBody {
         https://github.com/erincatto/box2d/tree/main
      */
 
-    public static void collideBodies(PhysBody first, PhysBody second, double dt) {
+    public static boolean collideBodies(PhysBody first, PhysBody second, double dt) {
         var fsShapeWorld = new PhysTransformedShape();
         fsShapeWorld.transform.set(first.transform);
         var ssShapeWorld = new PhysTransformedShape();
@@ -370,7 +373,7 @@ public class PhysBody {
 
         // TODO: Make warm starting work because it obviously doesn't work clearly obviously
 
-        if (colManifolds.isEmpty()) return;
+        if (colManifolds.isEmpty()) return false;
 
         var ctNormal = new Vector3d();
         var ctPoint = new Vector3d();
@@ -477,6 +480,8 @@ public class PhysBody {
                 first.transform.translateLocal(solve.set(ctNormal).mul(maxPen - depth));
             }
         }
+
+        return true;
     }
 
     public static void collideStaticSolids(PhysBody body, List<PhysSolid> solids, double dt) {
@@ -529,6 +534,8 @@ public class PhysBody {
             }
         }
 
+        body.wellSupported = false;
+
         if (colManifolds.isEmpty()) return;
         body.collisions.addAll(colManifolds);
 
@@ -561,7 +568,8 @@ public class PhysBody {
 
             // Why do these make it more stable? WHo knows
             double magicKFrictionConstant = 1.59;
-            double contactImpulseWeight = Math.min(1.0, 2.0 / contact.contacts.size());
+            double reactImpulseWeight = Math.min(1.0, 0.8 / contact.contacts.size() * body.inverseMass);
+            double slideImpulseWeight = Math.min(1.0, 2.0 / contact.contacts.size() * body.inverseMass);
 
             for (int i = 0; i < 4; i++) for (var ct : contact.contacts) {
                 ctNormal.set(ct.interpen).normalize();
@@ -608,14 +616,19 @@ public class PhysBody {
                     slideImpulse.set(ctTangent).mul(-tangentImpulse);
                 }
 
+                reactImpulse.mul(reactImpulseWeight);
+                slideImpulse.mul(slideImpulseWeight);
+
                 reactImpulse.add(slideImpulse);
 
-                body.applyImpulse(ctPoint, reactImpulse.mul(contactImpulseWeight));
+                body.applyImpulse(ctPoint, reactImpulse);
             }
 
             if (depth > maxPen) {
                 body.transform.translateLocal(solve.set(ctNormal).mul(depth - maxPen));
             }
+
+            body.wellSupported |= contact.isPosInManifoldShadow(ctr) && new Vector3d(body.acceleration).normalize().dot(contact.normal) < -0.99;
         }
     }
 }

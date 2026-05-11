@@ -24,6 +24,7 @@ import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
@@ -225,9 +226,6 @@ public class PhysicsPropEntity extends Entity {
                     }
                 } else {
                     body.acceleration.set(0, -PhysBody.GRAVITY, 0);
-                    //body.acceleration.zero();
-//                    body.linearMomentum.zero();
-//                    body.angularMomentum.zero();
                 }
 
                 if (externalImpulse.lengthSquared() > 0) {
@@ -294,10 +292,16 @@ public class PhysicsPropEntity extends Entity {
                 body.mutex.acquire();
 
                 Vec3 dir = null;
+                var cause = source.getDirectEntity();
                 var attacker = source.getEntity();
-                if (attacker != null) {
-                    dir = attacker.getHeadLookAngle();
+
+                if (cause instanceof Projectile) cause = attacker;
+                else if (attacker != null) {
                     pos = pos.add(0, attacker.getEyeHeight(), 0);
+                }
+
+                if (cause != null) {
+                    dir = cause.getHeadLookAngle();
                 }
 
                 damage = (float) (Math.sqrt(damage) * 2 / body.inverseMass);

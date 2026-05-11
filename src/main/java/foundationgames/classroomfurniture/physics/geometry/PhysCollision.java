@@ -1,5 +1,6 @@
 package foundationgames.classroomfurniture.physics.geometry;
 
+import foundationgames.classroomfurniture.physics.PhysUtil;
 import foundationgames.classroomfurniture.physics.body.PhysSurface;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4x3dc;
@@ -151,6 +152,41 @@ public class PhysCollision {
     public void keepContactsBehindPlaneOnly(Vector3dc planeNormal, double planeOrigin) {
         this.contacts.removeIf(i -> i.pos.dot(planeNormal) > planeOrigin);
         computeManifold();
+    }
+
+    public boolean isPosInManifoldShadow(Vector3dc pos) {
+        final double eps = 1e-4;
+
+        if (this.contacts.size() < 3) {
+            return false;
+        }
+
+        var origin = new Vector3d();
+        for (var ct : contacts) origin.add(ct.pos);
+        origin.div(contacts.size());
+
+        var posInManifoldPlane = new Vector3d(pos);
+        PhysUtil.flattenOntoPlane(this.normal, origin, pos, posInManifoldPlane);
+
+        var axis = new Vector3d(posInManifoldPlane).sub(origin);
+        if (axis.lengthSquared() <= eps) {
+            return true;
+        }
+
+        double threshold = axis.length();
+        axis.normalize();
+
+        var point = new Vector3d();
+        for (var ct : this.contacts) {
+            point.set(ct.pos).sub(origin);
+            double reach = point.dot(axis);
+
+            if (reach > threshold) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // interpen is the displacement to be applied to the second body to solve the contact
